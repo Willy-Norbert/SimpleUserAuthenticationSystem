@@ -1,116 +1,235 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const db = require("./db"); // Import database configuration
+const db = require("./db"); // Database connection
+const path = require("path");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+const dotenv = require("dotenv"); // Import dotenv
+
+require("dotenv").config();
+
 
 const app = express();
-app.use(express.json()); // Middleware to parse JSON in requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "public")));
+app.set("views", path.join(__dirname, "views"));
 
-// Secret key for JWT (Change this to a secure value in production)
-const JWT_SECRET = "your_secret_key";  
+const JWT_SECRET = "your_secret_key";
 
-// Middleware to protect routes
 const authMiddleware = (req, res, next) => {
-    const token = req.header("Authorization"); // Get token from request headers
+    console.log("Cookies received:", req.cookies); // Debugging
 
-    if (!token) return res.status(401).json({ message: "Access Denied" });
+    const token = req.cookies?.token; // Safely check if cookies exist
+    if (!token) {
+        console.log("No token found, redirecting to login");
+        return res.redirect("/login");
+    }
 
     try {
-        // Verify token and extract user ID
-        const verified = jwt.verify(token.replace("Bearer ", ""), JWT_SECRET);
-        req.user = verified; // Attach user info to request object
-        next(); // Continue to next function
+        const verified = jwt.verify(token, JWT_SECRET);
+        req.user = verified;
+        next();
     } catch (error) {
-        res.status(400).json({ message: "Invalid Token" });
+        console.log("Invalid token, redirecting to login");
+        res.redirect("/login");
     }
 };
 
-// 📝 REGISTER USER
-app.post("/register", async (req, res) => {
-    const { username, password, email } = req.body;
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
 
-    // Check if all fields are provided
-    if (!username || !password || !email) {
-        return res.status(400).json({ message: "All fields are required" });
+
+
+app.get("/register", (req, res) => {
+    res.render("register");
+});
+
+app.post("/register", async (req, res) => {
+    const { username, password, confirmPassword, email } = req.body;
+    console.log("Received Registration Data:", req.body); // Debugging
+
+    if (!username || !password || !confirmPassword || !email) {
+        return res.render("register", { error: "All fields are required" });
+    }
+    
+    if (password !== confirmPassword) {
+        return res.render("register", { error: "Passwords do not match" });
     }
 
     try {
-        // Check if user already exists
         const userExists = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+        console.log("User Exists Check:", userExists.rows); // Debugging
+
         if (userExists.rows.length > 0) {
-            return res.status(400).json({ message: "User already exists" });
+            return res.render("register", { error: "User already exists" });
         }
-
-        // Hash the password before storing it
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Save new user in database
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
         await db.query("INSERT INTO users (username, password, email) VALUES ($1, $2, $3)", 
                        [username, hashedPassword, email]);
-
-        res.status(201).json({ message: "User registered successfully" });
-
+        
+        console.log("User Registered Successfully");
+        res.redirect("/login");
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
+        console.error("Register Error:", error.message); // Debugging
+        res.render("register", { error: "Server error" });
     }
 });
 
-// 📝 LOGIN USER
+
+
+app.get("/login", (req, res) => {
+    res.render("login");
+});
+
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
+    console.log("Login Attempt:", username, password); // Debugging
 
-    // Check if all fields are provided
     if (!username || !password) {
-        return res.status(400).json({ message: "All fields are required" });
+        return res.render("login", { error: "All fields are required" });
     }
 
     try {
-        // Find user in database
         const user = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+        console.log("User Query Result:", user.rows); // Debugging
 
         if (user.rows.length === 0) {
-            return res.status(400).json({ message: "Invalid username or password" });
+            console.log("User Not Found");
+            return res.render("login", { error: "Invalid username or password" });
         }
 
-        // Compare password with stored hash
-        const validPassword = await bcrypt.compare(password, user.rows[0].password);
-        if (!validPassword) {
-            return res.status(400).json({ message: "Invalid username or password" });
+        const isPasswordCorrect = await bcrypt.compare(password, user.rows[0].password);
+        console.log("Password Match:", isPasswordCorrect); // Debugging
+
+        if (!isPasswordCorrect) {
+            return res.render("login", { error: "Invalid username or password" });
         }
 
-        // Generate JWT token
         const token = jwt.sign({ userId: user.rows[0].id }, JWT_SECRET, { expiresIn: "1h" });
+        console.log("Generated Token:", token); // Debugging
 
-        res.json({ message: "Login successful", token });
-
+        res.cookie("token", token, { httpOnly: true });
+        return res.redirect("/profile");
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
+        console.error("Login Error:", error.message); // Debugging
+        return res.render("login", { error: "Server error" });
     }
 });
 
-// 📝 GET USER PROFILE (Protected Route)
+
 app.get("/profile", authMiddleware, async (req, res) => {
     try {
-        // Retrieve user data from database using ID from token
-        const user = await db.query("SELECT id, username, email FROM users WHERE id = $1", [req.user.userId]);
+        const user = await db.query("SELECT username, email FROM users WHERE id = $1", [req.user.userId]);
+        res.render("profile", { user: user.rows[0] });
+    } catch (error) {
+        res.redirect("/login");
+    }
+});
+app.get("/logout", (req, res) => {
+    res.clearCookie("token"); // Remove JWT token from cookies
+    res.redirect("/login"); // Redirect to login page
+});
 
+// Configure Nodemailer (Replace with your email details)
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+});
+
+// Store reset tokens temporarily (You can use the database instead)
+const resetTokens = new Map();
+
+/** 
+ * Forgot Password - Send Reset Email 
+ */
+/** 
+ * Forgot Password - Show Forgot Password Form 
+ */
+app.get("/forgot-password", (req, res) => {
+    res.render("forgot-password", { error: null, success: null });
+});
+
+
+app.post("/forgot-password", async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const user = await db.query("SELECT * FROM users WHERE email = $1", [email]);
         if (user.rows.length === 0) {
-            return res.status(404).json({ message: "User not found" });
+            return res.render("forgot-password", { error: "Email not found", success: null });
         }
+        console.log(user); // Log the user object to ensure you're getting the expected data
 
-        res.json(user.rows[0]); // Send user details as response
+        // Generate Reset Token
+        const token = crypto.randomBytes(32).toString("hex");
+        resetTokens.set(token, { email, expires: Date.now() + 3600000 }); // 1 hour expiration
+
+        // Send Email
+        const resetLink = `http://localhost:5000/reset-password/${token}`;
+        await transporter.sendMail({
+            from: "willynorbert53@gmail.com",
+            to: email,
+            subject: "Password Reset",
+            html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 1 hour.</p>`,
+        });
+
+        // Success message with error as null
+        res.render("forgot-password", { success: "Password reset link sent to your email.", error: null });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
+        res.render("forgot-password", { error: "Server error", success: null });
     }
 });
 
-// Start the server
-const PORT = 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+
+app.get("/reset-password/:token", (req, res) => {
+    const { token } = req.params;
+
+    // Assuming you are validating the token here
+    if (!isValidToken(token)) {
+        return res.render("reset-password", { token, error: "Invalid or expired token" });
+    }
+
+    // Render the page without an error if the token is valid
+    res.render("reset-password", { token });
 });
+
+
+
+/** 
+ * Reset Password - Update Password 
+ */
+app.post("/reset-password/:token", async (req, res) => {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+
+    if (!resetTokens.has(token) || resetTokens.get(token).expires < Date.now()) {
+        return res.render("reset-password", { error: "Invalid or expired token" });
+    }
+
+    if (!password || !confirmPassword || password !== confirmPassword) {
+        return res.render("reset-password", { error: "Passwords do not match" });
+    }
+
+    try {
+        const email = resetTokens.get(token).email;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await db.query("UPDATE users SET password = $1 WHERE email = $2", [hashedPassword, email]);
+
+        resetTokens.delete(token); // Remove token after use
+        res.redirect("/login");
+
+    } catch (error) {
+        res.render("reset-password", { error: "Server error" });
+    }
+});
+const PORT = 5000;
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
