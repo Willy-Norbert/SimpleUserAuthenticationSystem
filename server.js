@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const db = require("./db"); // Database connection
+const db = require("./db"); 
 const path = require("path");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
@@ -27,7 +27,7 @@ const authMiddleware = (req, res, next) => {
     const token = req.cookies?.token;
     if (!token) {
         console.log("No token found, redirecting to login");
-        return res.redirect("/login");
+        return res.redirect("/");
     }
     try {
         const verified = jwt.verify(token, JWT_SECRET);
@@ -35,7 +35,7 @@ const authMiddleware = (req, res, next) => {
         next();
     } catch (error) {
         console.log("Invalid token, redirecting to login");
-        res.redirect("/login");
+        res.redirect("/");
     }
 };
 
@@ -66,16 +66,16 @@ app.post("/register", async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         await db.query("INSERT INTO users (username, password, email) VALUES ($1, $2, $3)", [username, hashedPassword, email]);
-        res.redirect("/login");
+        res.redirect("/");
     } catch (error) {
         console.error("Register Error:", error.message);
         res.render("register", { error: "Server error" });
     }
 });
 
-app.get("/login", (req, res) => res.render("login"));
+app.get("/", (req, res) => res.render("login"));
 
-app.post("/login", async (req, res) => {
+app.post("/", async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.render("login", { error: "All fields are required" });
@@ -103,13 +103,13 @@ app.get("/profile", authMiddleware, async (req, res) => {
         const user = await db.query("SELECT username, email FROM users WHERE id = $1", [req.user.userId]);
         res.render("profile", { user: user.rows[0] });
     } catch (error) {
-        res.redirect("/login");
+        res.redirect("/");
     }
 });
 
 app.get("/logout", (req, res) => {
     res.clearCookie("token");
-    res.redirect("/login");
+    res.redirect("/");
 });
 
 const transporter = nodemailer.createTransport({
@@ -172,7 +172,7 @@ app.post("/reset-password/:token", async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         await db.query("UPDATE users SET password = $1 WHERE email = $2", [hashedPassword, email]);
         resetTokens.delete(token);
-        res.redirect("/login");
+        res.redirect("/");
 
     } catch (error) {
         res.render("reset-password", { error: "Server error" });
