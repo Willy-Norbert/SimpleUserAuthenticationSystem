@@ -1,74 +1,103 @@
+
 # Simple User Authentication System
 
-## Project Overview
+This is a backend authentication system built using **Node.js (Express.js)**, **PostgreSQL**, **JWT (JSON Web Token)**, **bcrypt**, and tested using **Postman** but I also added simple front end for better checking system.
 
-**Title:** Building a Simple User Authentication System  
-**Level:** Beginner  
-**Duration:** 2-3 weeks  
-**Project Category:** Backend Development  
-**Technologies:** Node.js (Express.js), PostgreSQL, JWT (JSON Web Token), bcrypt
+## Features
 
-## Objectives
+- **User Signup:** Users can register with a username and password, and passwords are securely hashed using bcrypt.
+- **User Login:** Users can log in with their credentials and receive a JWT token for authenticated access.
+- **Password Hashing:** Passwords are stored securely using bcrypt hashing.
+- **Protected Routes:** Users can access protected routes only after successful login and token validation.
+- **Optional Password Reset:** Users can reset their passwords via email (optional feature).
 
-- Understand how user authentication works in backend systems.
-- Learn how to securely store user credentials.
-- Implement login, signup, and token-based authentication.
+## How to View / Test the API
 
-## Skills Involved
+You can test the API using tools like **Postman**. Here are the available endpoints:
 
-- REST API development
-- Secure password storage (hashing with bcrypt)
-- JWT-based authentication
+- **POST /register:** Registers a new user.
+- **POST /login:** Logs in the user and returns a JWT token.
+- **GET /profile:** Returns the user details (protected route).
 
-## Project Description
+## Technologies Used
 
-This project aims to create a backend authentication system that allows users to register, log in, and access protected routes using JWT tokens.
+- **Node.js (Express.js)** for backend API development.
+- **PostgreSQL** for database.
+- **JWT (JSON Web Token)** for token-based authentication.
+- **bcrypt** for password hashing.
+- **Postman** for API testing.
 
-## Project Features
+## Libraries Installed
 
-- **User Signup:** Users can create an account with a username and password.
-- **User Login:** Users can log in with their credentials and receive a JWT token.
-- **Password Hashing:** Securely store passwords using bcrypt.
-- **Protected Routes:** Users can only access certain API endpoints if they are logged in.
+Here are the libraries used in this project and their installation commands:
 
-## Steps to Complete
+1. **Express** for creating the backend API:
+   ```bash
+   npm install express
+   ```
 
-1. **Set Up the Development Environment:**
+2. **PostgreSQL** for the database:
+   ```bash
+   npm install pg
+   ```
 
-   - Install Express.js and other required dependencies.
+3. **JWT (JSON Web Token)** for token-based authentication:
+   ```bash
+   npm install jsonwebtoken
+   ```
 
-2. **Create Database Models:**
+4. **bcrypt** for password hashing:
+   ```bash
+   npm install bcrypt
+   ```
 
-   - Define the user schema in PostgreSQL.
+5. **dotenv** for managing environment variables:
+   ```bash
+   npm install dotenv
+   ```
 
-3. **Implement API Routes:**
+6. **cors** for enabling Cross-Origin Request Sharing (CORS):
+   ```bash
+   npm install cors
+   ```
 
-   - `POST /register`: Registers a new user (stores hashed password).
-   - `POST /login`: Authenticates user and returns a JWT token.
-   - `GET /profile`: Returns user details (protected route).
+7. **body-parser** for parsing incoming request bodies:
+   ```bash
+   npm install body-parser
+   ```
 
-4. **Secure the API:**
+8. **nodemon** for automatic server restarts during development:
+   ```bash
+   npm install --save-dev nodemon
+   ```
 
-   - Implement JWT authentication middleware to protect routes.
+## Installation
 
-5. **Test the API:**
+1. Clone the repository to your local machine:
+   ```bash
+   git clone <repository-url>
+   cd <repository-name>
+   ```
 
-   - Use Postman to test the authentication system.
+2. Install the required dependencies:
+   ```bash
+   npm install
+   ```
 
-6. **(Optional) Password Reset Feature:**
-   - Allow users to reset their password via email.
+3. Set up PostgreSQL and create the necessary database and tables.
 
-## Deliverables
+4. Configure environment variables (e.g., JWT secret key, database connection settings).
 
-- A working authentication system with signup, login, and JWT-based authentication.
-- API documentation explaining how to use the service.
-- A GitHub repository with the source code.
+5. Start the server:
+   ```bash
+   npm start
+   ```
 
-## Evaluation Criteria
+6. Test the API using Postman or any other API testing tool.
 
-- Proper user authentication and session management.
-- Secure password hashing and token handling.
-- API documentation and clean code structure.
+## How to Deploy
+
+You can deploy the backend using services like **Render**, **Heroku**, or **Vercel**. Follow the respective deployment guides for these platforms.
 
 ## Resources
 
@@ -77,9 +106,8 @@ This project aims to create a backend authentication system that allows users to
 - [bcrypt for Password Hashing](https://www.npmjs.com/package/bcrypt)
 - [Postman API Testing Guide](https://learning.postman.com/docs/)
 
-## Instructions and Guidelines
+## Submission Details
 
-- Store passwords securely using bcrypt.
-- Validate user inputs to prevent security issues.
-- Ensure JWT tokens expire after a set period for security.
-- Test authentication using tools like Postman.
+- Submit the GitHub repository link with the project code.
+- Provide API documentation with example requests and responses.
+- (Optional) Deploy the backend using **Render**, **Heroku**, or **Vercel**.
