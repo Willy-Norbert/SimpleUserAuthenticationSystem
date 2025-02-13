@@ -81,19 +81,23 @@ Here are the libraries used in this project and their installation commands:
 
 2. Install the required dependencies:
    ```bash
-   npm install
+   npm install 
+   ```
+3. Install other required dependencies for better auto run:
+   ```bash
+   npm install nodemn
    ```
 
-3. Set up PostgreSQL and create the necessary database and tables.
+4. Set up PostgreSQL and create the necessary database and tables.
 
-4. Configure environment variables (e.g., JWT secret key, database connection settings).
+5. Configure environment variables (e.g., JWT secret key, database connection settings).
 
-5. Start the server:
+6. Start the server:
    ```bash
    npm start
    ```
 
-6. Test the API using Postman or any other API testing tool.
+7. Test the API using Postman or any other API testing tool.
 
 ## How to Deploy
 
@@ -106,8 +110,3 @@ You can deploy the backend using services like **Render**, **Heroku**, or **Verc
 - [bcrypt for Password Hashing](https://www.npmjs.com/package/bcrypt)
 - [Postman API Testing Guide](https://learning.postman.com/docs/)
 
-## Submission Details
-
-- Submit the GitHub repository link with the project code.
-- Provide API documentation with example requests and responses.
-- (Optional) Deploy the backend using **Render**, **Heroku**, or **Vercel**.
