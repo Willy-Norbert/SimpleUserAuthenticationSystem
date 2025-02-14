@@ -130,7 +130,7 @@ app.post("/forgot-password", async (req, res) => {
         }
         const token = crypto.randomBytes(32).toString("hex");
         resetTokens.set(token, { email, expires: Date.now() + 3600000 });
-        const resetLink = `http://localhost:5000/reset-password/${token}`;
+        const resetLink = `https://simpleuserauthenticationsystem.onrender.com/reset-password/${token}`;
         await transporter.sendMail({
             from: EMAIL_USER,
             to: email,
